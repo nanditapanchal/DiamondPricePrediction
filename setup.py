@@ -21,6 +21,6 @@ setup(
     version='0.0.1',
     author='Nandita_Panchal',
     author_email='nanditapanchalg@gmail.com',
-    install_requires=get_requirements('requirement.txt'),
+    install_requires=get_requirements('requirements.txt'),
     packages=find_packages() 
 )
