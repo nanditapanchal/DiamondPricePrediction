@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diamond Price Prediction</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+  --bg-0:#0b0e14;
+  --bg-1:#12161f;
+  --panel:#151a24;
+  --line:#242b38;
+  --line-soft:#1b212c;
+  --text-hi:#f4f2ee;
+  --text-mid:#aab0bd;
+  --text-low:#6b7280;
+  --ice:#8fd3ff;
+  --violet:#c7b7ff;
+  --gold:#e3c368;
+  --error:#ff8577;
+  --ok:#7ee0b8;
+  --radius:14px;
+  --shadow-lg:0 30px 60px -20px rgba(0,0,0,.6);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Manrope',sans-serif;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(143,211,255,.10), transparent 45%),
+    radial-gradient(circle at 90% 0%, rgba(199,183,255,.10), transparent 40%),
+    radial-gradient(circle at 50% 110%, rgba(227,195,104,.06), transparent 50%),
+    var(--bg-0);
+  min-height:100vh;
+  color:var(--text-hi);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:56px 20px;
+}
+
+/* ---------- shell ---------- */
+
+.shell{
+  width:100%;
+  max-width:960px;
+}
+
+.crumbline{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:28px;
+  color:var(--text-low);
+  font-size:12.5px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.crumbline .dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--ice);
+  box-shadow:0 0 8px var(--ice);
+}
+
+/* ---------- header / signature ---------- */
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:28px;
+  margin-bottom:38px;
+  flex-wrap:wrap;
+}
+
+.header-text h1{
+  font-family:'Playfair Display',serif;
+  font-weight:700;
+  font-size:clamp(30px,4vw,42px);
+  line-height:1.1;
+  letter-spacing:-.01em;
+  background:linear-gradient(100deg,#ffffff 10%, var(--ice) 55%, var(--violet) 90%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.header-text p{
+  margin-top:10px;
+  color:var(--text-mid);
+  font-size:15px;
+  max-width:480px;
+}
+
+/* faceted gem signature mark, gently rotating light sweep */
+.gem-mark{
+  position:relative;
+  width:96px;
+  height:96px;
+  flex-shrink:0;
+}
+.gem-mark svg{
+  width:100%;
+  height:100%;
+  filter:drop-shadow(0 10px 22px rgba(143,211,255,.18));
+}
+.facet-a{fill:#1b2231;}
+.facet-b{fill:#232c40;}
+.facet-c{fill:#2b3550;}
+.facet-glint{
+  fill:url(#gemGrad);
+  animation:glint 4.5s ease-in-out infinite;
+  transform-origin:48px 40px;
+}
+@keyframes glint{
+  0%,100%{opacity:.55;}
+  50%{opacity:1;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .facet-glint{animation:none;}
+}
+
+/* ---------- form panel ---------- */
+
+.panel{
+  background:linear-gradient(180deg, var(--panel), var(--bg-1));
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:40px;
+  box-shadow:var(--shadow-lg);
+}
+
+.section-label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text-low);
+  margin-bottom:20px;
+}
+.section-label::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--line);
+}
+
+form{display:block;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:22px 20px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+.label-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:8px;
+}
+
+label{
+  color:var(--text-hi);
+  font-size:13.5px;
+  font-weight:600;
+  letter-spacing:.01em;
+}
+
+.info-wrap{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+}
+
+.info-icon{
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:var(--line-soft);
+  border:1px solid var(--line);
+  color:var(--text-mid);
+  font-size:10px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:help;
+  transition:.2s;
+}
+.info-wrap:hover .info-icon,
+.info-wrap:focus-within .info-icon{
+  background:var(--ice);
+  border-color:var(--ice);
+  color:#0b0e14;
+}
+
+.tooltip{
+  position:absolute;
+  bottom:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%) translateY(4px);
+  width:220px;
+  background:#1c2331;
+  border:1px solid var(--line);
+  color:var(--text-mid);
+  font-size:12px;
+  font-weight:500;
+  line-height:1.5;
+  padding:10px 12px;
+  border-radius:10px;
+  box-shadow:0 12px 24px rgba(0,0,0,.4);
+  opacity:0;
+  pointer-events:none;
+  transition:.18s ease;
+  z-index:20;
+}
+.tooltip::after{
+  content:"";
+  position:absolute;
+  top:100%;
+  left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:#1c2331;
+}
+.info-wrap:hover .tooltip,
+.info-wrap:focus-within .tooltip{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.field-shell{
+  position:relative;
+}
+
+input,select{
+  width:100%;
+  padding:13px 14px;
+  background:#0e1219;
+  border:1px solid var(--line);
+  color:var(--text-hi);
+  border-radius:10px;
+  font-size:14.5px;
+  font-family:'Manrope',sans-serif;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s, background .2s;
+  appearance:none;
+}
+
+select{
+  background-image:linear-gradient(45deg, transparent 50%, var(--text-mid) 50%),
+                    linear-gradient(135deg, var(--text-mid) 50%, transparent 50%);
+  background-position:calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+  cursor:pointer;
+}
+
+input::placeholder{color:var(--text-low);}
+
+input:hover,select:hover{border-color:#33394a;}
+
+input:focus,select:focus{
+  border-color:var(--ice);
+  background:#0f1420;
+  box-shadow:0 0 0 4px rgba(143,211,255,.12);
+}
+
+.form-group.valid input{
+  border-color:rgba(126,224,184,.5);
+}
+.form-group.invalid input{
+  border-color:var(--error);
+  box-shadow:0 0 0 4px rgba(255,133,119,.10);
+}
+
+.hint{
+  margin-top:7px;
+  font-size:11.5px;
+  color:var(--text-low);
+  min-height:14px;
+}
+
+.error-msg{
+  margin-top:7px;
+  font-size:11.5px;
+  color:var(--error);
+  display:none;
+  min-height:14px;
+}
+
+.form-group.invalid .error-msg{display:block;}
+.form-group.invalid .hint{display:none;}
+
+.unit-tag{
+  position:absolute;
+  right:14px;
+  top:13px;
+  font-size:11px;
+  color:var(--text-low);
+  pointer-events:none;
+  letter-spacing:.03em;
+}
+
+/* ---------- submit ---------- */
+
+.button-row{
+  margin-top:36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.form-status{
+  font-size:12.5px;
+  color:var(--text-low);
+}
+.form-status.ready{color:var(--ok);}
+
+.submit-btn{
+  position:relative;
+  overflow:hidden;
+  border:none;
+  border-radius:50px;
+  padding:15px 38px;
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:.02em;
+  color:#0b0e14;
+  background:linear-gradient(100deg, var(--ice), var(--violet));
+  cursor:pointer;
+  transition:transform .25s, box-shadow .25s, opacity .25s;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+
+.submit-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 16px 30px -8px rgba(143,211,255,.35);
+}
+
+.submit-btn:active{transform:translateY(0);}
+
+.submit-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+.spinner{
+  width:14px;height:14px;
+  border-radius:50%;
+  border:2px solid rgba(11,14,20,.35);
+  border-top-color:#0b0e20;
+  display:none;
+  animation:spin .7s linear infinite;
+}
+.submit-btn.loading .spinner{display:inline-block;}
+.submit-btn.loading .btn-label{opacity:.7;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ---------- result ---------- */
+
+.result{
+  margin-top:28px;
+  text-align:center;
+  padding:26px;
+  border-radius:16px;
+  background:linear-gradient(135deg, rgba(227,195,104,.10), rgba(143,211,255,.06));
+  border:1px solid rgba(227,195,104,.35);
+  animation:riseIn .5s ease;
+}
+
+@keyframes riseIn{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.result .eyebrow{
+  font-size:11.5px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--text-mid);
+  margin-bottom:10px;
+}
+
+.result .amount{
+  font-family:'Playfair Display',serif;
+  font-weight:700;
+  font-size:clamp(30px,5vw,44px);
+  color:var(--gold);
+}
+
+/* ---------- footer ---------- */
+
+.footer{
+  margin-top:34px;
+  text-align:center;
+  color:var(--text-low);
+  font-size:12.5px;
+}
+.footer span{
+  color:var(--text-mid);
+  font-weight:600;
+}
+
+/* ---------- responsive ---------- */
+
+@media(max-width:860px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+@media(max-width:560px){
+  .panel{padding:26px;}
+  .grid{grid-template-columns:1fr;}
+  .header{flex-direction:column;align-items:flex-start;}
+  .gem-mark{order:-1;}
+}
+
+/* visible keyboard focus for a11y */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+  outline:2px solid var(--ice);
+  outline-offset:2px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="shell">
+
+  <div class="crumbline"><span class="dot"></span> AI-Powered Valuation</div>
+
+  <div class="header">
+    <div class="header-text">
+      <h1>Diamond Price Prediction</h1>
+      <p>Enter the 4Cs and physical measurements below to get an instant, model-based price estimate.</p>
+    </div>
+
+    <div class="gem-mark" aria-hidden="true">
+      <svg viewBox="0 0 96 96">
+        <defs>
+          <linearGradient id="gemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8fd3ff"/>
+            <stop offset="100%" stop-color="#c7b7ff"/>
+          </linearGradient>
+        </defs>
+        <polygon class="facet-a" points="48,8 78,32 48,88 18,32"/>
+        <polygon class="facet-b" points="18,32 48,8 48,40"/>
+        <polygon class="facet-c" points="78,32 48,8 48,40"/>
+        <polygon class="facet-glint" points="48,40 78,32 48,88 18,32"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="panel">
+
+    <div class="section-label">Diamond Details</div>
+
+    <form id="diamondForm" action="{{ url_for('predict_datapoint') }}" method="POST" novalidate>
+
+      <div class="grid">
+
+        <div class="form-group" data-field="carat">
+          <div class="label-row">
+            <label for="carat">Carat</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Weight of the diamond. 1 carat = 200mg. Typical range: 0.2 – 5.0 ct.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="carat" name="carat" placeholder="e.g. 0.70" min="0.2" max="5.01" required>
+          </div>
+          <div class="hint">Accepted range: 0.2 – 5.01 ct</div>
+          <div class="error-msg">Enter a carat weight between 0.2 and 5.01</div>
+        </div>
+
+        <div class="form-group" data-field="depth">
+          <div class="label-row">
+            <label for="depth">Depth</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Total depth as a % of average diameter. Affects sparkle and light return.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="depth" name="depth" placeholder="e.g. 61.5" min="43" max="79" required>
+            <span class="unit-tag">%</span>
+          </div>
+          <div class="hint">Accepted range: 43 – 79%</div>
+          <div class="error-msg">Enter a depth percentage between 43 and 79</div>
+        </div>
+
+        <div class="form-group" data-field="table">
+          <div class="label-row">
+            <label for="table">Table</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Width of the top flat facet as a % of overall diameter.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="table" name="table" placeholder="e.g. 57" min="43" max="95" required>
+            <span class="unit-tag">%</span>
+          </div>
+          <div class="hint">Accepted range: 43 – 95%</div>
+          <div class="error-msg">Enter a table percentage between 43 and 95</div>
+        </div>
+
+        <div class="form-group" data-field="x">
+          <div class="label-row">
+            <label for="x">Length (X)</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Physical length of the diamond, measured in millimetres.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="x" name="x" placeholder="e.g. 5.70" min="0" max="10.8" required>
+            <span class="unit-tag">mm</span>
+          </div>
+          <div class="hint">Accepted range: 0 – 10.8 mm</div>
+          <div class="error-msg">Enter a length between 0 and 10.8 mm</div>
+        </div>
+
+        <div class="form-group" data-field="y">
+          <div class="label-row">
+            <label for="y">Width (Y)</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Physical width of the diamond, measured in millimetres.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="y" name="y" placeholder="e.g. 5.72" min="0" max="10.8" required>
+            <span class="unit-tag">mm</span>
+          </div>
+          <div class="hint">Accepted range: 0 – 10.8 mm</div>
+          <div class="error-msg">Enter a width between 0 and 10.8 mm</div>
+        </div>
+
+        <div class="form-group" data-field="z">
+          <div class="label-row">
+            <label for="z">Depth (Z)</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Physical height of the diamond from table to culet, in millimetres.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <input type="number" step="any" id="z" name="z" placeholder="e.g. 3.53" min="0" max="6.7" required>
+            <span class="unit-tag">mm</span>
+          </div>
+          <div class="hint">Accepted range: 0 – 6.7 mm</div>
+          <div class="error-msg">Enter a height between 0 and 6.7 mm</div>
+        </div>
+
+        <div class="form-group" data-field="cut">
+          <div class="label-row">
+            <label for="cut">Cut</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Quality of the cut, from Fair to Ideal. Better cuts return more light.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <select id="cut" name="cut" required>
+              <option value="" disabled selected>Select cut</option>
+              <option>Fair</option>
+              <option>Good</option>
+              <option>Very Good</option>
+              <option>Premium</option>
+              <option>Ideal</option>
+            </select>
+          </div>
+          <div class="hint">Fair → Ideal</div>
+          <div class="error-msg">Please select a cut grade</div>
+        </div>
+
+        <div class="form-group" data-field="color">
+          <div class="label-row">
+            <label for="color">Color</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">Colorlessness grade. D is colorless (best), J shows a slight tint.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <select id="color" name="color" required>
+              <option value="" disabled selected>Select color</option>
+              <option>D</option>
+              <option>E</option>
+              <option>F</option>
+              <option>G</option>
+              <option>H</option>
+              <option>I</option>
+              <option>J</option>
+            </select>
+          </div>
+          <div class="hint">D (colorless) → J (light tint)</div>
+          <div class="error-msg">Please select a color grade</div>
+        </div>
+
+        <div class="form-group" data-field="clarity">
+          <div class="label-row">
+            <label for="clarity">Clarity</label>
+            <div class="info-wrap" tabindex="0">
+              <span class="info-icon">i</span>
+              <div class="tooltip">How free the diamond is from inclusions. IF is flawless, I1 has visible inclusions.</div>
+            </div>
+          </div>
+          <div class="field-shell">
+            <select id="clarity" name="clarity" required>
+              <option value="" disabled selected>Select clarity</option>
+              <option>I1</option>
+              <option>SI2</option>
+              <option>SI1</option>
+              <option>VS2</option>
+              <option>VS1</option>
+              <option>VVS2</option>
+              <option>VVS1</option>
+              <option>IF</option>
+            </select>
+          </div>
+          <div class="hint">I1 (included) → IF (flawless)</div>
+          <div class="error-msg">Please select a clarity grade</div>
+        </div>
+
+      </div>
+
+      <div class="button-row">
+        <div class="form-status" id="formStatus">Fill in all fields to get an estimate</div>
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span class="spinner"></span>
+          <span class="btn-label">Predict Price</span>
+        </button>
+      </div>
+
+    </form>
+
+    {% if final_result %}
+    <div class="result">
+      <div class="eyebrow">Estimated Price</div>
+      <div class="amount">₹ {{ final_result }}</div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="footer">
+    Designed &amp; Developed by <span>Nandita Panchal</span>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const form = document.getElementById('diamondForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusEl = document.getElementById('formStatus');
+  const groups = Array.from(form.querySelectorAll('.form-group'));
+
+  function validateField(group){
+    const field = group.dataset.field;
+    const el = group.querySelector('input, select');
+    let valid = true;
+
+    if(el.tagName === 'SELECT'){
+      valid = el.value !== '';
+    } else {
+      const val = parseFloat(el.value);
+      const min = parseFloat(el.min);
+      const max = parseFloat(el.max);
+      valid = el.value.trim() !== '' && !isNaN(val) && val >= min && val <= max;
+    }
+
+    group.classList.remove('valid','invalid');
+    if(el.value.trim() === ''){
+      // untouched/empty: neutral state, no error shown yet
+      return null;
+    }
+    group.classList.add(valid ? 'valid' : 'invalid');
+    return valid;
+  }
+
+  function refreshStatus(){
+    const results = groups.map(validateField);
+    const allFilled = results.every(r => r !== null);
+    const allValid = results.every(r => r === true);
+
+    if(allFilled && allValid){
+      statusEl.textContent = 'All set — ready to predict';
+      statusEl.classList.add('ready');
+      submitBtn.disabled = false;
+    } else {
+      statusEl.classList.remove('ready');
+      submitBtn.disabled = false; // keep enabled; full validation runs on submit
+      const remaining = results.filter(r => r === null).length;
+      statusEl.textContent = remaining > 0
+        ? `${remaining} field${remaining > 1 ? 's' : ''} remaining`
+        : 'Check the highlighted fields';
+    }
+  }
+
+  groups.forEach(group => {
+    const el = group.querySelector('input, select');
+    el.addEventListener('input', refreshStatus);
+    el.addEventListener('change', refreshStatus);
+    el.addEventListener('blur', () => validateField(group));
+  });
+
+  form.addEventListener('submit', function(e){
+    let firstInvalid = null;
+    let allValid = true;
+
+    groups.forEach(group => {
+      const el = group.querySelector('input, select');
+      const val = el.tagName === 'SELECT' ? el.value : el.value.trim();
+
+      if(val === ''){
+        group.classList.add('invalid');
+        group.classList.remove('valid');
+        allValid = false;
+        if(!firstInvalid) firstInvalid = el;
+        return;
+      }
+      const ok = validateField(group);
+      if(ok === false){
+        allValid = false;
+        if(!firstInvalid) firstInvalid = el;
+      }
+    });
+
+    if(!allValid){
+      e.preventDefault();
+      statusEl.textContent = 'Please fix the highlighted fields';
+      statusEl.classList.remove('ready');
+      if(firstInvalid) firstInvalid.focus();
+      return;
+    }
+
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+  });
+
+  refreshStatus();
+})();
+</script>
+
+</body>
+</html>
